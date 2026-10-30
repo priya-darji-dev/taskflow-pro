@@ -1,6 +1,6 @@
 # TaskFlow Pro 🚀
 
-![TaskFlow Pro CI](https://github.com/priya-darji-dev/taskflow-pro/actions/workflows/flutter_ci.yml/badge.svg)
+[![TaskFlow Pro CI](https://github.com/priya-darji-dev/taskflow-pro/actions/workflows/flutter_ci.yml/badge.svg)](https://github.com/priya-darji-dev/taskflow-pro/actions/workflows/flutter_ci.yml)
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)
 ![SQLite](https://img.shields.io/badge/SQLite-Offline--First-003B57?logo=sqlite)
 
