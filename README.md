@@ -1,5 +1,9 @@
 # TaskFlow Pro 🚀
 
+![TaskFlow Pro CI](https://github.com/priya-darji-dev/taskflow-pro/actions/workflows/flutter_ci.yml/badge.svg)
+![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)
+![SQLite](https://img.shields.io/badge/SQLite-Offline--First-003B57?logo=sqlite)
+
 > An enterprise-grade, offline-first Project & Task Management SaaS application built with **Flutter**, **GetX**, and a high-performance relational **SQLite** storage engine.
 
 ---
