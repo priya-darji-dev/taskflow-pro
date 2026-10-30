@@ -101,6 +101,10 @@ class BoardsDashboardScreen extends StatelessWidget {
                             () => BoardDetailScreen(board: board),
                         transition: Transition.cupertino,
                       ),
+                      onEdit: () => Get.bottomSheet(
+                        CreateBoardSheet(boardToEdit: board),
+                        isScrollControlled: true,
+                      ),
                       onDelete: () =>
                           _confirmDelete(context, boardController, board.id),
                     ),

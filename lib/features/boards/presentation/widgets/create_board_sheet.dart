@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../data/board_model.dart';
 import '../controllers/board_controller.dart';
 
 class CreateBoardSheet extends StatefulWidget {
-  const CreateBoardSheet({super.key});
+  final BoardModel? boardToEdit;
+
+  const CreateBoardSheet({super.key, this.boardToEdit});
 
   @override
   State<CreateBoardSheet> createState() => _CreateBoardSheetState();
@@ -12,9 +15,24 @@ class CreateBoardSheet extends StatefulWidget {
 
 class _CreateBoardSheetState extends State<CreateBoardSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descController = TextEditingController();
-  int _selectedColor = AppColors.boardColorSwatches.first;
+  late final TextEditingController _titleController;
+  late final TextEditingController _descController;
+  late int _selectedColor;
+
+  bool get isEditing => widget.boardToEdit != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(
+      text: widget.boardToEdit?.title ?? '',
+    );
+    _descController = TextEditingController(
+      text: widget.boardToEdit?.description ?? '',
+    );
+    _selectedColor =
+        widget.boardToEdit?.colorHex ?? AppColors.boardColorSwatches.first;
+  }
 
   @override
   void dispose() {
@@ -25,13 +43,23 @@ class _CreateBoardSheetState extends State<CreateBoardSheet> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      Get.find<BoardController>().createBoard(
-        title: _titleController.text,
-        description: _descController.text.isEmpty
-            ? 'No description provided'
-            : _descController.text,
-        colorHex: _selectedColor,
-      );
+      final controller = Get.find<BoardController>();
+      if (isEditing) {
+        controller.updateBoard(
+          board: widget.boardToEdit!,
+          title: _titleController.text,
+          description: _descController.text,
+          colorHex: _selectedColor,
+        );
+      } else {
+        controller.createBoard(
+          title: _titleController.text,
+          description: _descController.text.isEmpty
+              ? 'No description provided'
+              : _descController.text,
+          colorHex: _selectedColor,
+        );
+      }
       Get.back();
     }
   }
@@ -58,32 +86,38 @@ class _CreateBoardSheetState extends State<CreateBoardSheet> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Drag Handle
                 Center(
                   child: Container(
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color:
+                      isDark ? AppColors.darkBorder : AppColors.lightBorder,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Create New Workspace Board',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                Text(
+                  isEditing
+                      ? 'Edit Workspace Board'
+                      : 'Create New Workspace Board',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _titleController,
-                  autofocus: true,
+                  autofocus: !isEditing,
                   decoration: const InputDecoration(
                     labelText: 'Board Title',
                     hintText: 'e.g., Sprint 15 Roadmap',
                   ),
-                  validator: (val) =>
-                  val == null || val.trim().isEmpty ? 'Title is required' : null,
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'Title is required'
+                      : null,
                 ),
                 const SizedBox(height: 14),
                 TextFormField(
@@ -128,7 +162,11 @@ class _CreateBoardSheetState extends State<CreateBoardSheet> {
                               : null,
                         ),
                         child: isSelected
-                            ? const Icon(Icons.check, color: Colors.white, size: 18)
+                            ? const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 18,
+                        )
                             : null,
                       ),
                     );
@@ -147,9 +185,12 @@ class _CreateBoardSheetState extends State<CreateBoardSheet> {
                       ),
                     ),
                     onPressed: _submit,
-                    child: const Text(
-                      'Create Board',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    child: Text(
+                      isEditing ? 'Save Changes' : 'Create Board',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ),

@@ -5,12 +5,14 @@ import '../../data/board_model.dart';
 class BoardCard extends StatelessWidget {
   final BoardModel board;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const BoardCard({
     super.key,
     required this.board,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -34,7 +36,6 @@ class BoardCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Color swatch icon container
                   Container(
                     width: 42,
                     height: 42,
@@ -79,20 +80,49 @@ class BoardCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
+                  PopupMenuButton<String>(
                     icon: Icon(
-                      Icons.delete_outline_rounded,
+                      Icons.more_vert_rounded,
                       size: 20,
                       color: secondaryTextColor,
                     ),
-                    onPressed: onDelete,
-                    tooltip: 'Delete Board',
+                    onSelected: (value) {
+                      if (value == 'edit') onEdit();
+                      if (value == 'delete') onDelete();
+                    },
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 18),
+                            SizedBox(width: 10),
+                            Text('Edit Board'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete_outline_rounded,
+                              size: 18,
+                              color: AppColors.priorityUrgent,
+                            ),
+                            SizedBox(width: 10),
+                            Text(
+                              'Delete Board',
+                              style: TextStyle(color: AppColors.priorityUrgent),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
               const SizedBox(height: 18),
-              // Progress Footer
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -130,9 +160,8 @@ class BoardCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: board.progress,
                   minHeight: 6,
-                  backgroundColor: isDark
-                      ? AppColors.darkBorder
-                      : AppColors.lightBorder,
+                  backgroundColor:
+                  isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                 ),
               ),

@@ -149,6 +149,44 @@ class TaskController extends GetxController {
     await loadSubtasks(taskId);
     await loadTasks(); // Updates the ☑️ X/Y badge on the parent task card
   }
+  Future<void> updateTask({
+    required TaskModel task,
+    required String title,
+    required String description,
+    required String priority,
+    required DateTime dueDate,
+    required String tag,
+  }) async {
+    final updated = task.copyWith(
+      title: title.trim(),
+      description: description.trim(),
+      priority: priority,
+      dueDate: dueDate,
+      tag: tag.trim().isEmpty ? 'General' : tag.trim(),
+    );
+
+    await _repository.updateTask(updated);
+    await loadTasks();
+    _syncBoardCounts();
+  }
+
+  /// Restores a deleted task and its subtasks when the user taps 'UNDO'
+  Future<void> restoreTask(
+      TaskModel task,
+      List<SubtaskModel> subtasks,
+      ) async {
+    await _repository.createTask(task);
+    for (final sub in subtasks) {
+      await _repository.createSubtask(sub);
+    }
+    await loadTasks();
+    _syncBoardCounts();
+  }
+
+  /// Fetches subtasks directly for backup before swipe-deleting a task
+  Future<List<SubtaskModel>> getSubtasksSnapshot(String taskId) {
+    return _repository.getSubtasksByTask(taskId);
+  }
 
   Future<void> toggleSubtask(SubtaskModel subtask) async {
     await _repository.toggleSubtask(subtask.id, !subtask.isCompleted);

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../data/task_model.dart';
 import '../controllers/task_controller.dart';
 
 class CreateTaskSheet extends StatefulWidget {
-  const CreateTaskSheet({super.key});
+  final TaskModel? taskToEdit;
+
+  const CreateTaskSheet({super.key, this.taskToEdit});
 
   @override
   State<CreateTaskSheet> createState() => _CreateTaskSheetState();
@@ -13,14 +16,28 @@ class CreateTaskSheet extends StatefulWidget {
 
 class _CreateTaskSheetState extends State<CreateTaskSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descController = TextEditingController();
-  final _tagController = TextEditingController(text: 'Feature');
+  late final TextEditingController _titleController;
+  late final TextEditingController _descController;
+  late final TextEditingController _tagController;
 
-  String _selectedPriority = 'medium';
-  DateTime _selectedDueDate = DateTime.now().add(const Duration(days: 2));
+  late String _selectedPriority;
+  late DateTime _selectedDueDate;
 
   final List<String> _priorities = ['low', 'medium', 'high', 'urgent'];
+
+  bool get isEditing => widget.taskToEdit != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final task = widget.taskToEdit;
+    _titleController = TextEditingController(text: task?.title ?? '');
+    _descController = TextEditingController(text: task?.description ?? '');
+    _tagController = TextEditingController(text: task?.tag ?? 'Feature');
+    _selectedPriority = task?.priority ?? 'medium';
+    _selectedDueDate =
+        task?.dueDate ?? DateTime.now().add(const Duration(days: 2));
+  }
 
   @override
   void dispose() {
@@ -34,7 +51,7 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDueDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (picked != null) {
@@ -44,13 +61,25 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      Get.find<TaskController>().createTask(
-        title: _titleController.text,
-        description: _descController.text,
-        priority: _selectedPriority,
-        dueDate: _selectedDueDate,
-        tag: _tagController.text,
-      );
+      final controller = Get.find<TaskController>();
+      if (isEditing) {
+        controller.updateTask(
+          task: widget.taskToEdit!,
+          title: _titleController.text,
+          description: _descController.text,
+          priority: _selectedPriority,
+          dueDate: _selectedDueDate,
+          tag: _tagController.text,
+        );
+      } else {
+        controller.createTask(
+          title: _titleController.text,
+          description: _descController.text,
+          priority: _selectedPriority,
+          dueDate: _selectedDueDate,
+          tag: _tagController.text,
+        );
+      }
       Get.back();
     }
   }
@@ -82,20 +111,24 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                      color:
+                      isDark ? AppColors.darkBorder : AppColors.lightBorder,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Text(
-                  'Create New Task',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                Text(
+                  isEditing ? 'Edit Task' : 'Create New Task',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _titleController,
-                  autofocus: true,
+                  autofocus: !isEditing,
                   decoration: const InputDecoration(
                     labelText: 'Task Title',
                     hintText: 'e.g., Implement Offline Sync Queue',
@@ -137,10 +170,14 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                DateFormat('MMM d, yyyy').format(_selectedDueDate),
+                                DateFormat('MMM d, yyyy')
+                                    .format(_selectedDueDate),
                                 style: const TextStyle(fontSize: 13),
                               ),
-                              const Icon(Icons.calendar_month_rounded, size: 18),
+                              const Icon(
+                                Icons.calendar_month_rounded,
+                                size: 18,
+                              ),
                             ],
                           ),
                         ),
@@ -191,9 +228,12 @@ class _CreateTaskSheetState extends State<CreateTaskSheet> {
                       ),
                     ),
                     onPressed: _submit,
-                    child: const Text(
-                      'Add Task to Board',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                    child: Text(
+                      isEditing ? 'Save Task Changes' : 'Add Task to Board',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ),

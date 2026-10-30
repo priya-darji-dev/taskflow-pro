@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../boards/data/board_model.dart';
+import '../../data/task_model.dart';
 import '../controllers/task_controller.dart';
 import '../widgets/create_task_sheet.dart';
 import '../widgets/task_card.dart';
@@ -139,20 +140,102 @@ class _BoardDetailScreenState extends State<BoardDetailScreen> {
                 separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final task = tasks[index];
-                  return TaskCard(
-                    task: task,
-                    onTap: () {
-                      Get.bottomSheet(
-                        TaskDetailSheet(task: task),
-                        isScrollControlled: true,
-                      );
+                  return Dismissible(
+                    key: ValueKey(task.id),
+                    background: Container(
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.statusDone.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.statusDone),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: AppColors.statusDone,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Mark Completed',
+                            style: TextStyle(
+                              color: AppColors.statusDone,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    secondaryBackground: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.priorityUrgent.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.priorityUrgent),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Delete Task',
+                            style: TextStyle(
+                              color: AppColors.priorityUrgent,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(
+                            Icons.delete_sweep_rounded,
+                            color: AppColors.priorityUrgent,
+                          ),
+                        ],
+                      ),
+                    ),
+                    confirmDismiss: (direction) async {
+                      if (direction == DismissDirection.startToEnd) {
+                        // Swipe Right -> Toggle Done status without removing card from tree
+                        final nextStatus =
+                        task.status == 'done' ? 'todo' : 'done';
+                        await _taskController.updateTaskStatus(
+                          task.id,
+                          nextStatus,
+                        );
+                        Get.snackbar(
+                          nextStatus == 'done'
+                              ? 'Task Completed'
+                              : 'Task Reopened',
+                          '"${task.title}" moved to ${nextStatus.toUpperCase()}',
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                          duration: const Duration(seconds: 2),
+                        );
+                        return false;
+                      }
+                      return true; // Swipe Left proceeds to onDismissed
                     },
-                    onStatusChange: (newStatus) =>
-                        _taskController.updateTaskStatus(task.id, newStatus),
-                    onDelete: () => _taskController.deleteTask(task.id),
+                    onDismissed: (direction) => _deleteTaskWithUndo(task),
+                    child: TaskCard(
+                      task: task,
+                      onTap: () {
+                        Get.bottomSheet(
+                          TaskDetailSheet(task: task),
+                          isScrollControlled: true,
+                        );
+                      },
+                      onEdit: () {
+                        Get.bottomSheet(
+                          CreateTaskSheet(taskToEdit: task),
+                          isScrollControlled: true,
+                        );
+                      },
+                      onStatusChange: (newStatus) =>
+                          _taskController.updateTaskStatus(task.id, newStatus),
+                      onDelete: () => _deleteTaskWithUndo(task),
+                    ),
                   );
-                },
-              );
+                },              );
             }),
           ),
         ],
@@ -188,6 +271,33 @@ class _BoardDetailScreenState extends State<BoardDetailScreen> {
       selected: isSelected,
       selectedColor: AppColors.primary,
       onSelected: (_) => _taskController.setStatusFilter(value),
+    );
+  }
+  Future<void> _deleteTaskWithUndo(TaskModel task) async {
+    final subtasksBackup = await _taskController.getSubtasksSnapshot(task.id);
+    await _taskController.deleteTask(task.id);
+
+    Get.snackbar(
+      'Task Deleted',
+      '"${task.title}" was removed',
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(16),
+      backgroundColor: AppColors.darkSurface,
+      colorText: AppColors.darkTextPrimary,
+      duration: const Duration(seconds: 4),
+      mainButton: TextButton(
+        onPressed: () {
+          Get.closeCurrentSnackbar();
+          _taskController.restoreTask(task, subtasksBackup);
+        },
+        child: const Text(
+          'UNDO',
+          style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
     );
   }
 }

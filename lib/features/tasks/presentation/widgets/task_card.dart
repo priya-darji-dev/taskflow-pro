@@ -7,6 +7,7 @@ class TaskCard extends StatelessWidget {
   final TaskModel task;
   final VoidCallback onTap;
   final ValueChanged<String> onStatusChange;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const TaskCard({
@@ -14,6 +15,7 @@ class TaskCard extends StatelessWidget {
     required this.task,
     required this.onTap,
     required this.onStatusChange,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -235,6 +237,19 @@ class TaskCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                   ],
+                  InkWell(
+                    onTap: onEdit,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 18,
+                        color: secondaryColor,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   InkWell(
                     onTap: onDelete,
                     borderRadius: BorderRadius.circular(6),

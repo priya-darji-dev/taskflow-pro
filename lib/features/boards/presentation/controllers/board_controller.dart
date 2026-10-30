@@ -45,6 +45,23 @@ class BoardController extends GetxController {
     await _repository.createBoard(newBoard);
     await loadBoards();
   }
+  Future<void> updateBoard({
+    required BoardModel board,
+    required String title,
+    required String description,
+    required int colorHex,
+  }) async {
+    final updated = board.copyWith(
+      title: title.trim(),
+      description: description.trim().isEmpty
+          ? 'No description provided'
+          : description.trim(),
+      colorHex: colorHex,
+    );
+
+    await _repository.updateBoard(updated);
+    await loadBoards();
+  }
 
   /// Deletes a board (SQLite automatically cascades & deletes child tasks/subtasks)
   Future<void> deleteBoard(String boardId) async {
